@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-accent: #4F46E5;
+  --color-bg-main: #ffffff;
+  --color-card-bg: #f5f5f5;
+  --color-text-main: #1a1a1a;
+  --color-text-muted: #6b7280;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-main);
+    color: var(--color-text-main);
+  }
+
+  body {
+    @apply m-0 p-0 overflow-x-hidden;
+  }
+}
+
+/* Simple UI components */
+.card-shadow {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
