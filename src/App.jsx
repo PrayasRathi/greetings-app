@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import AuthPage from './components/AuthPage';
 import HomePage from './components/HomePage';
 import ProfileSetupModal from './components/ProfileSetupModal';
+import { ToastContainer } from './utils/toast';
 
 function App() {
   const { 
@@ -36,6 +37,8 @@ function App() {
         onSubmit={updateProfile}
         user={user}
       />
+
+      <ToastContainer />
     </>
   );
 }
