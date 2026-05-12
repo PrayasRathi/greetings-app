@@ -58,6 +58,12 @@ export const useCanvas = () => {
 
     const finalPhotoURL = customPhoto || user.photoURL;
     
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
     if (finalPhotoURL) {
       const avatarImg = new Image();
       avatarImg.crossOrigin = "anonymous";
@@ -68,12 +74,6 @@ export const useCanvas = () => {
         avatarImg.onload = () => { avatarLoaded = true; resolve(); };
         avatarImg.onerror = () => { avatarLoaded = false; resolve(); };
       });
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
       
       if (avatarLoaded) {
         ctx.fillStyle = 'white';
@@ -82,16 +82,10 @@ export const useCanvas = () => {
       } else {
         drawInitialFallback(ctx, user, avatarX, avatarY, avatarRadius);
       }
-      ctx.restore();
     } else {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
       drawInitialFallback(ctx, user, avatarX, avatarY, avatarRadius);
-      ctx.restore();
     }
+    ctx.restore();
 
     // Border for avatar
     ctx.strokeStyle = 'white';
@@ -142,14 +136,15 @@ export const useCanvas = () => {
   }, []);
 
   const drawInitialFallback = (ctx, user, x, y, radius) => {
-    ctx.fillStyle = '#4F46E5'; // Indigo accent
+    // Fill the clipped area with indigo
+    ctx.fillStyle = '#4F46E5';
     ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
     
     ctx.fillStyle = 'white';
     ctx.font = 'bold 40px Inter';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const initial = (user.displayName || 'G').charAt(0).toUpperCase();
+    const initial = (user.displayName || 'U').charAt(0).toUpperCase();
     ctx.fillText(initial, x, y);
   };
 

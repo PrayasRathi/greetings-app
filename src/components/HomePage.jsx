@@ -86,18 +86,24 @@ const HomePage = ({ user, onLogout, onUpdateProfile }) => {
   const downloadKey = `greetings_download_count_${userId}`;
   const downloadCount = localStorage.getItem(downloadKey) || '0';
 
-  const UserAvatar = ({ size = "9", fontSize = "14px" }) => (
-    <div 
-      style={{ width: size === "9" ? '36px' : (size === "20" ? '80px' : '40px'), height: size === "9" ? '36px' : (size === "20" ? '80px' : '40px') }}
-      className={`flex items-center justify-center rounded-full bg-accent text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0`}
-    >
-      {user.photoURL ? (
-        <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-      ) : (
-        <span style={{ fontSize: size === "20" ? '32px' : fontSize }}>{getInitials(user.displayName)}</span>
-      )}
-    </div>
-  );
+  const UserAvatar = ({ size = "9", fontSize = "14px" }) => {
+    const hasPhoto = user.photoURL && user.photoURL.trim() !== '';
+    const dimension = size === "9" ? '36px' : (size === "20" ? '80px' : (size === "10" ? '40px' : '36px'));
+    const actualFontSize = size === "20" ? '32px' : fontSize;
+
+    return (
+      <div 
+        style={{ width: dimension, height: dimension }}
+        className="flex items-center justify-center rounded-full bg-accent text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0"
+      >
+        {hasPhoto ? (
+          <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+        ) : (
+          <span style={{ fontSize: actualFontSize }}>{getInitials(user.displayName)}</span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-bg-main text-text-main transition-colors duration-200">
@@ -113,9 +119,12 @@ const HomePage = ({ user, onLogout, onUpdateProfile }) => {
           {/* Dropdown Menu */}
           {showDropdown && (
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#1A1A1A] rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 mb-2">
-                <p className="text-sm font-bold truncate text-[#1a1a1a] dark:text-[#F5F5F5]">{user.displayName}</p>
-                <p className="text-[10px] text-text-muted truncate">{user.email || 'Guest User'}</p>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 mb-2 flex items-center gap-3">
+                <UserAvatar size="10" fontSize="16px" />
+                <div className="overflow-hidden">
+                  <p className="text-sm font-bold truncate text-[#1a1a1a] dark:text-[#F5F5F5]">{user.displayName}</p>
+                  <p className="text-[10px] text-text-muted truncate">{user.email || 'Guest User'}</p>
+                </div>
               </div>
 
               <button 
