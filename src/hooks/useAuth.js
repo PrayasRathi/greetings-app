@@ -3,7 +3,9 @@ import {
   signInWithPopup, 
   GoogleAuthProvider, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -54,6 +56,38 @@ export const useAuth = () => {
     }
   };
 
+  const signUpWithEmail = async (email, password) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      return { success: true };
+    } catch (error) {
+      let message = "An error occurred during sign up.";
+      if (error.code === 'auth/email-already-in-use') {
+        message = "An account with this email already exists.";
+      } else if (error.code === 'auth/invalid-email') {
+        message = "Please enter a valid email address.";
+      }
+      return { success: false, error: message };
+    }
+  };
+
+  const signInWithEmail = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return { success: true };
+    } catch (error) {
+      let message = "An error occurred during login.";
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = "Incorrect password. Please try again.";
+      } else if (error.code === 'auth/user-not-found') {
+        message = "No account found with this email. Please sign up.";
+      } else if (error.code === 'auth/invalid-email') {
+        message = "Please enter a valid email address.";
+      }
+      return { success: false, error: message };
+    }
+  };
+
   const loginAsGuest = () => {
     const guestUser = {
       uid: 'guest-' + Math.random().toString(36).substr(2, 9),
@@ -91,6 +125,8 @@ export const useAuth = () => {
     loading,
     needsProfileSetup,
     loginWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
     loginAsGuest,
     logout,
     updateProfile

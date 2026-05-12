@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Download } from 'lucide-react';
 import { useCanvas } from '../hooks/useCanvas';
 import { useFavourites } from '../hooks/useFavourites';
+import { downloadImage } from '../utils/shareImage';
+import { showToast } from '../utils/toast';
 
 const TemplateCard = ({ template, user, onClick, scaled = false }) => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const { drawGreeting } = useCanvas();
-  const { isFavourite, toggleFavourite } = useFavourites();
+  const userId = user?.uid || 'guest';
+  const { isFavourite, toggleFavourite } = useFavourites(userId);
 
   useEffect(() => {
     const generatePreview = async () => {
@@ -33,14 +36,29 @@ const TemplateCard = ({ template, user, onClick, scaled = false }) => {
     toggleFavourite(template.id);
   };
 
+  const handleDirectDownload = async (e) => {
+    e.stopPropagation();
+    const canvas = document.createElement('canvas');
+    const url = await drawGreeting(canvas, template, user);
+    if (url) {
+      downloadImage(url, `greeting-${template.id}.png`);
+      showToast("Image downloaded!");
+      
+      // Increment global download count (namespaced)
+      const downloadKey = `greetings_download_count_${userId}`;
+      const currentCount = parseInt(localStorage.getItem(downloadKey) || '0');
+      localStorage.setItem(downloadKey, (currentCount + 1).toString());
+    }
+  };
+
   return (
     <div 
       onClick={() => onClick(template)}
-      className={`bg-white rounded-lg overflow-hidden cursor-pointer border border-gray-200 card-shadow hover:border-indigo-300 transition-colors ${
+      className={`bg-card-bg rounded-lg overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-800 card-shadow hover:border-indigo-300 transition-colors ${
         scaled ? 'scale-[0.85] origin-left flex-shrink-0 w-64' : ''
       }`}
     >
-      <div className="aspect-square w-full relative bg-gray-100">
+      <div className="aspect-square w-full relative bg-gray-100 dark:bg-gray-900">
         {previewUrl ? (
           <img 
             src={previewUrl} 
@@ -48,7 +66,7 @@ const TemplateCard = ({ template, user, onClick, scaled = false }) => {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+          <div className="w-full h-full flex items-center justify-center text-text-muted text-xs">
             Loading...
           </div>
         )}
@@ -65,7 +83,7 @@ const TemplateCard = ({ template, user, onClick, scaled = false }) => {
           
           <button 
             onClick={handleFavourite}
-            className="p-1.5 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-sm"
+            className="p-1.5 bg-white/80 dark:bg-black/40 backdrop-blur-sm rounded-full hover:bg-white dark:hover:bg-black/60 transition-colors shadow-sm"
           >
             <Heart 
               size={16} 
@@ -77,10 +95,19 @@ const TemplateCard = ({ template, user, onClick, scaled = false }) => {
       
       <div className="p-3">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">{template.category}</p>
-          <p className="text-[10px] text-gray-400">↓ {formatDownloads(template.downloads)} downloads</p>
+          <p className="text-[10px] text-accent font-bold uppercase tracking-wider">{template.category}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[10px] text-text-muted">↓ {formatDownloads(template.downloads)}</p>
+            <button 
+              onClick={handleDirectDownload}
+              className="p-1 text-text-muted hover:text-accent transition-colors"
+              title="Download now"
+            >
+              <Download size={14} />
+            </button>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 line-clamp-2 italic">"{template.quote}"</p>
+        <p className="text-xs text-text-muted line-clamp-2 italic">"{template.quote}"</p>
       </div>
     </div>
   );

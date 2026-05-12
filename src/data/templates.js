@@ -1,5 +1,4 @@
 export const categories = [
-  'All',
   'Birthday',
   'Anniversary',
   'Festival',

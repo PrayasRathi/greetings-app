@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 export const useCanvas = () => {
-  const drawGreeting = useCallback(async (canvas, template, user) => {
+  const drawGreeting = useCallback(async (canvas, template, user, customPhoto = null) => {
     if (!canvas || !template || !user) return;
 
     const ctx = canvas.getContext('2d');
@@ -18,10 +18,9 @@ export const useCanvas = () => {
     
     await new Promise((resolve) => {
       bgImg.onload = resolve;
-      bgImg.onerror = resolve; // Continue or handle error gracefully
+      bgImg.onerror = resolve;
     });
 
-    // Draw image and cover the canvas
     const imgAspect = bgImg.width / bgImg.height;
     const canvasAspect = width / height;
     let renderW, renderH, x, y;
@@ -52,55 +51,51 @@ export const useCanvas = () => {
     ctx.textBaseline = 'middle';
     ctx.fillText(user.displayName || 'Friend', width / 2, bannerHeight / 2);
 
-    // 4. Draw user's circular avatar at top-left
+    // 4. Draw user's circular avatar
     const avatarRadius = 45;
     const avatarX = 60;
     const avatarY = 40;
 
-    const avatarImg = new Image();
-    avatarImg.crossOrigin = "anonymous";
-    avatarImg.src = user.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default';
-
-    let avatarLoaded = false;
-    await new Promise((resolve) => {
-      avatarImg.onload = () => {
-        avatarLoaded = true;
-        resolve();
-      };
-      avatarImg.onerror = () => {
-        avatarLoaded = false;
-        resolve();
-      };
-    });
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
+    const finalPhotoURL = customPhoto || user.photoURL;
     
-    if (avatarLoaded) {
-      // Draw white background for avatar in case it's transparent
-      ctx.fillStyle = 'white';
-      ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-      ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-    } else {
-      // Fallback: Colored circle with initial
-      ctx.fillStyle = '#22C55E'; // Theme green
-      ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-      
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 40px Inter';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const initial = (user.displayName || 'G').charAt(0).toUpperCase();
-      ctx.fillText(initial, avatarX, avatarY);
-    }
-    ctx.restore();
+    if (finalPhotoURL) {
+      const avatarImg = new Image();
+      avatarImg.crossOrigin = "anonymous";
+      avatarImg.src = finalPhotoURL;
 
-    // Draw stroke border for avatar
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 3;
+      let avatarLoaded = false;
+      await new Promise((resolve) => {
+        avatarImg.onload = () => { avatarLoaded = true; resolve(); };
+        avatarImg.onerror = () => { avatarLoaded = false; resolve(); };
+      });
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      
+      if (avatarLoaded) {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+        ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+      } else {
+        drawInitialFallback(ctx, user, avatarX, avatarY, avatarRadius);
+      }
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      drawInitialFallback(ctx, user, avatarX, avatarY, avatarRadius);
+      ctx.restore();
+    }
+
+    // Border for avatar
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.stroke();
@@ -116,7 +111,6 @@ export const useCanvas = () => {
     ctx.font = '24px Inter';
     ctx.textAlign = 'center';
     
-    // Wrap text logic
     const wrapText = (text, maxWidth) => {
       const words = text.split(' ');
       let line = '';
@@ -146,6 +140,18 @@ export const useCanvas = () => {
 
     return canvas.toDataURL('image/png');
   }, []);
+
+  const drawInitialFallback = (ctx, user, x, y, radius) => {
+    ctx.fillStyle = '#4F46E5'; // Indigo accent
+    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 40px Inter';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const initial = (user.displayName || 'G').charAt(0).toUpperCase();
+    ctx.fillText(initial, x, y);
+  };
 
   return { drawGreeting };
 };

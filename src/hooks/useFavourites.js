@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { showToast } from '../utils/toast';
 
-export const useFavourites = () => {
+export const useFavourites = (userId = 'guest') => {
   const [favourites, setFavourites] = useState([]);
+  const key = `greetings_favourites_${userId}`;
 
   useEffect(() => {
-    const saved = localStorage.getItem('greetings_favourites');
+    const saved = localStorage.getItem(key);
     if (saved) {
       setFavourites(JSON.parse(saved));
+    } else {
+      setFavourites([]);
     }
-  }, []);
+  }, [key]);
 
   const toggleFavourite = (id) => {
     setFavourites(prev => {
@@ -22,7 +25,7 @@ export const useFavourites = () => {
         updated = [...prev, id];
         showToast("Added to favourites!");
       }
-      localStorage.setItem('greetings_favourites', JSON.stringify(updated));
+      localStorage.setItem(key, JSON.stringify(updated));
       return updated;
     });
   };
