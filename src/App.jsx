@@ -31,7 +31,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-bg-main flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -43,7 +43,11 @@ function App() {
 
   return (
     <>
-      <HomePage user={user} onLogout={logout} />
+      <HomePage 
+        user={user} 
+        onLogout={logout} 
+        onUpdateProfile={updateProfile} 
+      />
       
       <ProfileSetupModal 
         isOpen={needsProfileSetup} 

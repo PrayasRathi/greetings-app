@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { LogOut, Search, X, User, Settings, BarChart2, Heart, Moon, Sun, ChevronRight, Download } from 'lucide-react';
+import { LogOut, Search, X, User, Settings, BarChart2, Heart, Moon, Sun, ChevronRight, Download, Edit3, Clock } from 'lucide-react';
 import { categories, templates } from '../data/templates';
 import TemplateCard from './TemplateCard';
 import PersonalizationModal from './PersonalizationModal';
 import PremiumPopup from './PremiumPopup';
+import ProfileSetupModal from './ProfileSetupModal';
 import { useFavourites } from '../hooks/useFavourites';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
-const HomePage = ({ user, onLogout }) => {
+const HomePage = ({ user, onLogout, onUpdateProfile }) => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showPremiumPopup, setShowPremiumPopup] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('greetings_dark_mode') === 'true');
   
   const dropdownRef = useRef(null);
@@ -22,7 +24,7 @@ const HomePage = ({ user, onLogout }) => {
   const { favourites, isFavourite } = useFavourites(userId);
   const { recentIds, addToRecent } = useRecentlyViewed(userId);
 
-  const allCategories = useMemo(() => ['All', 'Favourites', ...categories], []);
+  const allCategories = useMemo(() => ['All', 'Favourites', 'Recent', ...categories], []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,18 +58,16 @@ const HomePage = ({ user, onLogout }) => {
 
     if (activeCategory === 'Favourites') {
       result = result.filter(t => isFavourite(t.id));
+    } else if (activeCategory === 'Recent') {
+      result = recentIds
+        .map(id => templates.find(t => t.id === id))
+        .filter(Boolean);
     } else if (activeCategory !== 'All') {
       result = result.filter(t => t.category === activeCategory);
     }
 
     return result;
-  }, [activeCategory, searchQuery, favourites, isFavourite]);
-
-  const recentTemplates = useMemo(() => {
-    return recentIds
-      .map(id => templates.find(t => t.id === id))
-      .filter(Boolean);
-  }, [recentIds]);
+  }, [activeCategory, searchQuery, favourites, isFavourite, recentIds]);
 
   const handleTemplateClick = (template) => {
     addToRecent(template.id);
@@ -86,12 +86,15 @@ const HomePage = ({ user, onLogout }) => {
   const downloadKey = `greetings_download_count_${userId}`;
   const downloadCount = localStorage.getItem(downloadKey) || '0';
 
-  const UserAvatar = ({ size = "10" }) => (
-    <div className={`flex items-center justify-center w-${size} h-${size} rounded-full bg-accent text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0`}>
+  const UserAvatar = ({ size = "9", fontSize = "14px" }) => (
+    <div 
+      style={{ width: size === "9" ? '36px' : (size === "20" ? '80px' : '40px'), height: size === "9" ? '36px' : (size === "20" ? '80px' : '40px') }}
+      className={`flex items-center justify-center rounded-full bg-accent text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0`}
+    >
       {user.photoURL ? (
         <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
       ) : (
-        <span className={size === "24" ? "text-3xl" : "text-base"}>{getInitials(user.displayName)}</span>
+        <span style={{ fontSize: size === "20" ? '32px' : fontSize }}>{getInitials(user.displayName)}</span>
       )}
     </div>
   );
@@ -103,8 +106,8 @@ const HomePage = ({ user, onLogout }) => {
         <h1 className="text-xl font-bold tracking-tight">Greetings App</h1>
         
         <div className="relative" ref={dropdownRef}>
-          <button onClick={() => setShowDropdown(!showDropdown)}>
-            <UserAvatar size="10" />
+          <button onClick={() => setShowDropdown(!showDropdown)} className="outline-none">
+            <UserAvatar size="9" fontSize="14px" />
           </button>
 
           {/* Dropdown Menu */}
@@ -121,6 +124,14 @@ const HomePage = ({ user, onLogout }) => {
               >
                 <User size={16} />
                 <span>View Profile</span>
+              </button>
+
+              <button 
+                onClick={() => { setShowEditModal(true); setShowDropdown(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#1a1a1a] dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Edit3 size={16} />
+                <span>Edit Profile</span>
               </button>
 
               <div className="px-4 py-2 border-t border-b border-gray-50 dark:border-gray-800 my-1 bg-gray-50/50 dark:bg-gray-800/50">
@@ -205,33 +216,16 @@ const HomePage = ({ user, onLogout }) => {
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium border transition-colors ${
+                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium border transition-colors flex items-center gap-2 ${
                   activeCategory === category 
                   ? 'bg-accent border-accent text-white' 
                   : 'bg-card-bg border-gray-300 dark:border-gray-700 text-text-muted hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
+                {category === 'Recent' && <Clock size={14} />}
                 {category}
               </button>
             ))}
-          </div>
-        )}
-
-        {/* Recently Viewed */}
-        {!searchQuery && recentTemplates.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-sm font-bold text-text-muted uppercase tracking-widest mb-4">Recently Viewed</h2>
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-              {recentTemplates.map(template => (
-                <TemplateCard 
-                  key={`recent-${template.id}`}
-                  template={template}
-                  user={user}
-                  onClick={handleTemplateClick}
-                  scaled={true}
-                />
-              ))}
-            </div>
           </div>
         )}
 
@@ -248,7 +242,7 @@ const HomePage = ({ user, onLogout }) => {
             ))
           ) : (
             <div className="col-span-full py-20 text-center text-text-muted">
-              No templates found matching your search.
+              {activeCategory === 'Recent' ? 'No recently viewed templates yet.' : 'No templates found matching your search.'}
             </div>
           )}
         </div>
@@ -257,10 +251,16 @@ const HomePage = ({ user, onLogout }) => {
       {/* View Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-bg-main w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800">
+          <div className="bg-bg-main w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowProfileModal(false)}
+              className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-main transition-colors"
+            >
+              <X size={20} />
+            </button>
             <div className="p-8 text-center">
               <div className="mx-auto mb-4">
-                <UserAvatar size="24" />
+                <UserAvatar size="20" />
               </div>
               <h3 className="text-xl font-bold mb-1">{user.displayName}</h3>
               <p className="text-sm text-text-muted mb-8">{user.email || 'Guest User'}</p>
@@ -275,6 +275,14 @@ const HomePage = ({ user, onLogout }) => {
           </div>
         </div>
       )}
+
+      {/* Edit Profile Modal */}
+      <ProfileSetupModal 
+        isOpen={showEditModal}
+        user={user}
+        onSubmit={onUpdateProfile}
+        onClose={() => setShowEditModal(false)}
+      />
 
       <PersonalizationModal 
         isOpen={!!selectedTemplate}

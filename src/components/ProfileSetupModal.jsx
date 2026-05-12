@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
-import { Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, X } from 'lucide-react';
 
-const ProfileSetupModal = ({ isOpen, onSubmit, user }) => {
-  const [name, setName] = useState(user?.displayName || '');
-  const [avatar, setAvatar] = useState(user?.photoURL || null);
-  const [previewAvatar, setPreviewAvatar] = useState(user?.photoURL || null);
+const ProfileSetupModal = ({ isOpen, onSubmit, user, onClose }) => {
+  const [name, setName] = useState('');
+  const [avatar, setAvatar] = useState(null);
+  const [previewAvatar, setPreviewAvatar] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.displayName || '');
+      setAvatar(user.photoURL || null);
+      setPreviewAvatar(user.photoURL || null);
+    }
+  }, [user, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({ displayName: name, photoURL: avatar });
+    if (onClose) onClose();
   };
 
   const generateNewAvatar = () => {
@@ -26,7 +35,16 @@ const ProfileSetupModal = ({ isOpen, onSubmit, user }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-bg-main w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200">
+      <div className="bg-bg-main w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200 relative">
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-main transition-colors"
+          >
+            <X size={20} />
+          </button>
+        )}
+
         <div className="p-8">
           <h2 className="text-xl font-bold text-center mb-6">Setup Your Profile</h2>
           
