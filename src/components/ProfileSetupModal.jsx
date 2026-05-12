@@ -22,10 +22,16 @@ const ProfileSetupModal = ({ isOpen, onSubmit, user, onClose }) => {
     if (onClose) onClose();
   };
 
-  const generateNewAvatar = () => {
-    const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`;
-    setAvatar(newAvatar);
-    setPreviewAvatar(newAvatar);
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAvatar(event.target.result);
+        setPreviewAvatar(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const getInitials = (name) => {
@@ -50,7 +56,10 @@ const ProfileSetupModal = ({ isOpen, onSubmit, user, onClose }) => {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col items-center gap-3">
-              <div className="relative cursor-pointer group" onClick={generateNewAvatar}>
+              <div 
+                className="relative cursor-pointer group" 
+                onClick={() => document.getElementById('avatar-input').click()}
+              >
                 <div className="w-24 h-24 rounded-full border-2 border-accent bg-accent text-white flex items-center justify-center text-3xl font-bold shadow-md overflow-hidden group-hover:scale-105 transition-transform">
                   {previewAvatar ? (
                     <img 
@@ -65,8 +74,15 @@ const ProfileSetupModal = ({ isOpen, onSubmit, user, onClose }) => {
                 <div className="absolute bottom-0 right-0 p-1.5 bg-accent rounded-full text-white shadow-sm">
                   <Camera size={14} />
                 </div>
+                <input 
+                  id="avatar-input"
+                  type="file" 
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
               </div>
-              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase">Click to change avatar</p>
+              <p className="text-[10px] text-text-muted font-bold tracking-widest uppercase">Click to upload photo</p>
             </div>
 
             <div className="space-y-1">

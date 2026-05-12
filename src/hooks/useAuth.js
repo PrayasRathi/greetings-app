@@ -36,7 +36,14 @@ export const useAuth = () => {
         // Check for guest user in local storage
         const guest = localStorage.getItem('guest_user');
         if (guest) {
-          setUser(JSON.parse(guest));
+          const parsedGuest = JSON.parse(guest);
+          setUser(parsedGuest);
+          
+          // Check if guest needs profile setup
+          const profileDone = localStorage.getItem('greetings_profile_guest');
+          if (!profileDone) {
+            setNeedsProfileSetup(true);
+          }
         } else {
           setUser(null);
         }
@@ -61,11 +68,15 @@ export const useAuth = () => {
       await createUserWithEmailAndPassword(auth, email, password);
       return { success: true };
     } catch (error) {
+      console.error("Signup error:", error);
       let message = "An error occurred during sign up.";
       if (error.code === 'auth/email-already-in-use') {
         message = "An account with this email already exists.";
       } else if (error.code === 'auth/invalid-email') {
         message = "Please enter a valid email address.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = "Email/Password login is not enabled in Firebase Console.";
+        console.warn("CRITICAL: Email/Password provider is disabled in Firebase Console.");
       }
       return { success: false, error: message };
     }
@@ -76,6 +87,7 @@ export const useAuth = () => {
       await signInWithEmailAndPassword(auth, email, password);
       return { success: true };
     } catch (error) {
+      console.error("Login error:", error);
       let message = "An error occurred during login.";
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         message = "Incorrect password. Please try again.";
@@ -83,6 +95,9 @@ export const useAuth = () => {
         message = "No account found with this email. Please sign up.";
       } else if (error.code === 'auth/invalid-email') {
         message = "Please enter a valid email address.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        message = "Email/Password login is not enabled in Firebase Console.";
+        console.warn("CRITICAL: Email/Password provider is disabled in Firebase Console.");
       }
       return { success: false, error: message };
     }
@@ -90,26 +105,35 @@ export const useAuth = () => {
 
   const loginAsGuest = () => {
     const guestUser = {
-      uid: 'guest-' + Math.random().toString(36).substr(2, 9),
+      uid: 'guest', // Fixed UID for guests
       displayName: 'Guest User',
-      photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guest',
+      photoURL: null, // No dicebear
       isGuest: true
     };
     localStorage.setItem('guest_user', JSON.stringify(guestUser));
     setUser(guestUser);
+    
+    // Trigger profile setup for first-time guests
+    const profileDone = localStorage.getItem('greetings_profile_guest');
+    if (!profileDone) {
+      setNeedsProfileSetup(true);
+    }
   };
 
   const logout = async () => {
     await signOut(auth);
     localStorage.removeItem('guest_user');
     setUser(null);
+    setNeedsProfileSetup(false);
   };
 
   const updateProfile = async (data) => {
     if (user?.isGuest) {
       const updatedGuest = { ...user, ...data };
       localStorage.setItem('guest_user', JSON.stringify(updatedGuest));
+      localStorage.setItem('greetings_profile_guest', 'true');
       setUser(updatedGuest);
+      setNeedsProfileSetup(false);
       return;
     }
 

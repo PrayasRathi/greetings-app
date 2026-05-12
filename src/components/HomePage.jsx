@@ -93,7 +93,6 @@ const HomePage = ({ user, onLogout, onUpdateProfile }) => {
     const dimension = size === "9" ? '36px' : (size === "20" ? '80px' : (size === "10" ? '40px' : '36px'));
     const actualFontSize = size === "20" ? '32px' : fontSize;
 
-    // Ensure reset error if user changes
     useEffect(() => {
       setImgError(false);
     }, [user.photoURL]);
@@ -101,7 +100,7 @@ const HomePage = ({ user, onLogout, onUpdateProfile }) => {
     return (
       <div 
         style={{ width: dimension, height: dimension }}
-        className="flex items-center justify-center rounded-full bg-accent text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0"
+        className="flex items-center justify-center rounded-full bg-[#4F46E5] text-white font-bold overflow-hidden border-2 border-transparent hover:border-white transition-all shadow-sm flex-shrink-0"
       >
         {hasPhoto ? (
           <img 
